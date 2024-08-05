@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrendCast</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1>TrendCast Analytics</h1>
+                <p>Predict your business's sales for the next 5 days!</p>
+            </div>
+            <div class="header-right">
+                <button class="subscribe-button">Subscribe</button>
+                <div class="dropdown">
+                    <button class="dropdown-button">List of Product Names</button>
+                    <div class="dropdown-content">
+                        <input type="text" id="search-input" placeholder="Search Product Name">
+                        <ul id="product-list">
+                            <!-- JavaScript will populate this list -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <p class="note">Please note: This is a demo website that uses sample data (Amazon Sales Report.csv). Subscribe to acquire TrendCast’s services and predict your business’s sales!</p>
+
+    <form action="/predict" method="post">
+        <div class="form-group">
+            <label for="product_name">Product Name:</label>
+            <input type="text" id="product_name" name="product_name" placeholder="Enter Product Name" required>
+            <button type="submit">Predict</button>
+        </div>
+    </form>
+    <br>
+    {% if prediction_text %}
+        <p>{{ prediction_text }}</p>
+    {% endif %}
+    {% if metrics_text %}
+        <p>{{ metrics_text }}</p>
+    {% endif %}
+    {% if image_url %}
+        <img src="{{ image_url }}" alt="Sales Predictions Plot">
+    {% endif %}
+
+    <script>
+        // Ensure the productNames array is properly formatted as a JSON array
+        const productNames = JSON.parse('{{ product_names | tojson | safe }}');
+
+        const productList = document.getElementById('product-list');
+
+        function displayProducts(names) {
+            productList.innerHTML = '';
+            names.forEach(name => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `${name} <button class="copy-button" onclick="copyToClipboard('${name}')">&#x1F4CB;</button>`;
+                productList.appendChild(listItem);
+            });
+        }
+
+        function filterProducts() {
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            const filteredNames = productNames.filter(name => name.toLowerCase().includes(searchInput));
+            displayProducts(filteredNames);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`Copied: ${text}`);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+
+        document.querySelector('.dropdown-button').addEventListener('click', (event) => {
+            document.querySelector('.dropdown-content').classList.toggle('show');
+            event.stopPropagation();
+        });
+
+        document.getElementById('search-input').addEventListener('input', filterProducts);
+
+        // Close the dropdown when clicking outside of it
+        document.addEventListener('click', (event) => {
+            const dropdownContent = document.querySelector('.dropdown-content');
+            if (!dropdownContent.contains(event.target) && !event.target.matches('.dropdown-button')) {
+                dropdownContent.classList.remove('show');
+            }
+        });
+
+        // Display all products by default
+        displayProducts(productNames);
+    </script>
+</body>
+</html>
